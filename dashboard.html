@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InGrowwth Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .copied-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ffd700;
+            color: #1a1a1a;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            z-index: 1001;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ffd700;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #pdf-content, #pdf-content * {
+                visibility: visible;
+            }
+            #pdf-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-zinc-900 min-h-screen flex items-center justify-center">
+
+    <div id="auth-screen" class="w-full max-w-5xl mx-auto p-6 flex flex-col md:flex-row items-center justify-center min-h-screen">
+        <div class="hidden md:flex flex-1 items-center justify-center">
+            <img src="https://placehold.co/500x500/1a1a1a/ffd700?text=InGrowwth+Innovations" alt="Invoicing illustration" class="w-full max-w-md rounded-xl shadow-lg">
+        </div>
+        <div id="auth-form-container" class="w-full md:flex-1 bg-zinc-800 p-8 rounded-xl shadow-md max-w-md">
+            <h1 id="auth-title" class="text-3xl font-bold text-gray-100 mb-4 text-center">Login to InGrowwth</h1>
+            <p class="text-gray-400 mb-6 text-center">Empower your business with our tools.</p>
+            
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-gray-300">Email Address</label>
+                    <input type="email" id="login-email" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100">
+                </div>
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-gray-300">Password</label>
+                    <input type="password" id="login-password" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100">
+                </div>
+                <button type="submit" class="w-full px-4 py-3 bg-yellow-400 text-zinc-900 font-bold rounded-lg hover:bg-yellow-500 transition-colors duration-300 shadow-md">
+                    Login
+                </button>
+            </form>
+            
+            <form id="signup-form" class="space-y-4 hidden">
+                <div>
+                    <label for="signup-name" class="block text-sm font-medium text-gray-300">Your Name</label>
+                    <input type="text" id="signup-name" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100" required>
+                </div>
+                <div>
+                    <label for="signup-company-name" class="block text-sm font-medium text-gray-300">Company Name</label>
+                    <input type="text" id="signup-company-name" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100" required>
+                </div>
+                <div>
+                    <label for="signup-email" class="block text-sm font-medium text-gray-300">Email Address</label>
+                    <input type="email" id="signup-email" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100" required>
+                </div>
+                <div>
+                    <label for="signup-password" class="block text-sm font-medium text-gray-300">Password</label>
+                    <input type="password" id="signup-password" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100" required>
+                </div>
+                <div>
+                    <label for="signup-phone" class="block text-sm font-medium text-gray-300">Phone Number</label>
+                    <input type="tel" id="signup-phone" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100">
+                </div>
+                <div>
+                    <label for="signup-address" class="block text-sm font-medium text-gray-300">Business Address</label>
+                    <textarea id="signup-address" rows="2" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100"></textarea>
+                </div>
+                <div>
+                    <label for="signup-employees" class="block text-sm font-medium text-gray-300">Number of Employees</label>
+                    <input type="number" id="signup-employees" min="1" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100">
+                </div>
+                <button type="submit" class="w-full px-4 py-3 bg-yellow-400 text-zinc-900 font-bold rounded-lg hover:bg-yellow-500 transition-colors duration-300 shadow-md">
+                    Sign Up
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <a href="#" id="toggle-auth-link" class="text-sm text-gray-400 hover:text-yellow-400 transition-colors duration-300">
+                    Don't have an account? Sign up
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-spinner" class="modal">
+        <div class="loader"></div>
+    </div>
+
+    <div id="dashboard-screen" class="flex flex-col min-h-screen hidden">
+        <nav class="bg-zinc-800 p-4 shadow-md sticky top-0 z-50">
+            <div class="container mx-auto flex items-center justify-between">
+                <div class="text-2xl font-bold text-gray-100">
+                    <span class="text-yellow-400">In</span>Growwth
+                </div>
+                <div class="md:hidden">
+                    <button id="menu-button" class="text-gray-400 hover:text-gray-200 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                </div>
+                <div id="nav-links" class="hidden md:flex md:space-x-6 items-center text-gray-400 absolute md:static top-16 left-0 w-full md:w-auto bg-zinc-800 md:bg-transparent shadow-md md:shadow-none transition-all duration-300 transform -translate-y-full md:translate-y-0 p-4 md:p-0">
+                    <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6 w-full">
+                        <a href="#" class="nav-link hover:text-yellow-400 font-medium transition duration-300" data-target="dashboard-view">Dashboard</a>
+                        <a href="#" class="nav-link hover:text-yellow-400 font-medium transition duration-300" data-target="invoices-view">Invoices</a>
+                        <a href="#" class="nav-link hover:text-yellow-400 font-medium transition duration-300" data-target="clients-view">Clients</a>
+                        <a href="#" class="nav-link hover:text-yellow-400 font-medium transition duration-300" data-target="products-view">Products</a>
+                        <button id="new-invoice-btn-nav" class="px-4 py-2 bg-yellow-400 text-zinc-900 rounded-lg hover:bg-yellow-500 transition duration-300 shadow-md">New Invoice</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <main class="container mx-auto p-4 sm:p-6 flex-grow">
+            <div id="dashboard-view" class="view-screen">
+                <h1 class="text-3xl font-bold text-gray-100 mb-6">Dashboard</h1>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                    <div class="bg-zinc-800 rounded-xl shadow-md p-6 flex items-center justify-between transition-transform transform hover:scale-105">
+                        <div>
+                            <p class="text-gray-400 text-sm">Total Invoices</p>
+                            <p class="text-3xl font-bold text-gray-100 mt-1">1,250</p>
+                        </div>
+                        <div class="bg-yellow-900 rounded-full p-3">
+                            <svg class="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        </div>
+                    </div>
+                    <div class="bg-zinc-800 rounded-xl shadow-md p-6 flex items-center justify-between transition-transform transform hover:scale-105">
+                        <div>
+                            <p class="text-gray-400 text-sm">Outstanding Payments</p>
+                            <p class="text-3xl font-bold text-gray-100 mt-1">₹ 25,450</p>
+                        </div>
+                        <div class="bg-yellow-900 rounded-full p-3">
+                            <svg class="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.485 0-4.5 2.015-4.5 4.5S9.515 17 12 17s4.5-2.015 4.5-4.5S14.485 8 12 8z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13h1m16 0h1M13 3v1m0 16v1M6.5 6.5l.707.707M17.5 17.5l.707.707M6.5 17.5l.707-.707M17.5 6.5l.707-.707"></path></svg>
+                        </div>
+                    </div>
+                    <div class="bg-zinc-800 rounded-xl shadow-md p-6 flex items-center justify-between transition-transform transform hover:scale-105">
+                        <div>
+                            <p class="text-gray-400 text-sm">Reminders Sent</p>
+                            <p class="text-3xl font-bold text-gray-100 mt-1">15</p>
+                        </div>
+                        <div class="bg-yellow-900 rounded-full p-3">
+                            <svg class="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0m6 0h-6"></path></svg>
+                        </div>
+                    </div>
+                    <div class="bg-zinc-800 rounded-xl shadow-md p-6 flex items-center justify-between transition-transform transform hover:scale-105">
+                        <div>
+                            <p class="text-gray-400 text-sm">Last 30 Days Sales</p>
+                            <p class="text-3xl font-bold text-gray-100 mt-1">₹ 1,75,800</p>
+                        </div>
+                        <div class="bg-yellow-900 rounded-full p-3">
+                            <svg class="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13a9 9 0 019 9m-9-9a9 9 0 00-9 9m9 4c1.11 0 2-.89 2-2s-.89-2-2-2m-2 2h4"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-zinc-800 rounded-xl shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-100 mb-4">Sales Trend</h2>
+                        <div class="w-full h-80">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-zinc-800 rounded-xl shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-100 mb-4">Invoice Status Breakdown</h2>
+                        <div class="w-full h-80 flex items-center justify-center">
+                            <canvas id="statusChart" class="max-h-full"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <div class="bg-zinc-800 rounded-xl shadow-md p-6 mb-8 lg:w-2/3">
+                        <h2 class="text-xl font-semibold text-gray-100 mb-4">Recent Invoices</h2>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-700">
+                                <thead class="bg-zinc-700">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Invoice ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Client Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Amount</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-zinc-800 divide-y divide-gray-700">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">INV-001</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">Tech Solutions Inc.</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">Aug 28, 2025</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">₹ 5,000</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-900 text-yellow-400">Paid</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button class="text-gray-500 hover:text-gray-300 transition duration-300">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">INV-002</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">Global Traders</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">Aug 27, 2025</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">₹ 7,500</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-900 text-yellow-400">Pending</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button class="text-gray-500 hover:text-gray-300 transition duration-300">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">INV-003</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">Retail Masters</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">Aug 26, 2025</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">₹ 2,000</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-900 text-yellow-400">Paid</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button class="text-gray-500 hover:text-gray-300 transition duration-300">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="lg:w-1/3 flex flex-col space-y-6">
+                        <div class="bg-zinc-800 rounded-xl shadow-md p-6">
+                            <h2 class="text-xl font-semibold text-gray-100 mb-4">Send an Invoice Reminder</h2>
+                            <p class="text-gray-400 mb-4 text-sm">Automate your collection process with a single click. Reminders help you get paid on time.</p>
+                            <button id="send-reminder-btn" class="w-full px-4 py-3 bg-yellow-400 text-zinc-900 font-bold rounded-lg hover:bg-yellow-500 transition-colors duration-300 shadow-md">
+                                Send Reminder
+                            </button>
+                        </div>
+                        <div class="bg-zinc-800 rounded-xl shadow-md p-6">
+                            <h2 class="text-xl font-semibold text-gray-100 mb-4">Client Portal</h2>
+                            <p class="text-gray-400 mb-4 text-sm">Give your clients a dedicated portal to view and pay their invoices securely. This improves transparency and reduces payment friction.</p>
+                            <button id="client-portal-btn" class="w-full px-4 py-3 bg-yellow-400 text-zinc-900 font-bold rounded-lg hover:bg-yellow-500 transition-colors duration-300 shadow-md">
+                                Create Client Portal
+                            </button>
+                        </div>
+                        <div class="bg-zinc-800 rounded-xl shadow-md p-6">
+                            <h2 class="text-xl font-semibold text-gray-100 mb-4">User Profile</h2>
+                            <p class="text-gray-400 mb-4 text-sm">Manage your personal and company information, as well as account settings and security.</p>
+                            <button id="user-profile-btn" class="w-full px-4 py-3 bg-yellow-400 text-zinc-900 font-bold rounded-lg hover:bg-yellow-500 transition-colors duration-300 shadow-md">
+                                Open Profile
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="invoices-view" class="view-screen hidden">
+                <h1 class="text-3xl font-bold text-gray-100 mb-6">All Invoices</h1>
+                <div class="bg-zinc-800 rounded-xl shadow-md p-6">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-700">
+                            <thead class="bg-zinc-700">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Invoice ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Client Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Amount</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-zinc-800 divide-y divide-gray-700">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">INV-001</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">Tech Solutions Inc.</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">Aug 28, 2025</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">₹ 5,000</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-900 text-yellow-400">Paid</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">...</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">INV-002</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">Global Traders</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">Aug 27, 2025</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">₹ 7,500</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-900 text-yellow-400">Pending</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="clients-view" class="view-screen hidden">
+                <h1 class="text-3xl font-bold text-gray-100 mb-6">My Clients</h1>
+                <div class="bg-zinc-800 rounded-xl shadow-md p-6">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-700">
+                            <thead class="bg-zinc-700">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Client Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Last Invoice</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Total Invoiced</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-zinc-800 divide-y divide-gray-700">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">Tech Solutions Inc.</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">contact@techsolutions.com</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">INV-001</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">₹ 25,000</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">...</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">Global Traders</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">sales@globaltraders.in</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">INV-002</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">₹ 55,000</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="products-view" class="view-screen hidden">
+                <h1 class="text-3xl font-bold text-gray-100 mb-6">My Products</h1>
+                <div class="bg-zinc-800 rounded-xl shadow-md p-6">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-700">
+                            <thead class="bg-zinc-700">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Product Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">SKU</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Price (₹)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Stock</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-zinc-800 divide-y divide-gray-700">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">Product A</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">PA-4567</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">₹ 500.00</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">150</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">...</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">Service B</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">SB-1234</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">₹ 2,500.00</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">N/A</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="invoice-screen" class="view-screen hidden">
+                <div class="max-w-4xl mx-auto w-full">
+                    <div class="flex items-center justify-between mb-6">
+                        <h1 class="text-3xl font-bold text-gray-100">New Invoice</h1>
+                        <button id="back-to-dashboard-btn" class="text-gray-400 hover:text-gray-200 transition-colors duration-300 flex items-center">
+                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                            Back to Dashboard
+                        </button>
+                    </div>
+
+                    <div class="bg-zinc-800 rounded-xl shadow-md p-6 mb-6">
+                        <h2 class="text-xl font-semibold text-gray-100 mb-4">Select Template</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="template-card border-2 border-gray-700 rounded-lg p-4 cursor-pointer hover:border-yellow-400 transition-colors duration-300" data-template="classic">
+                                <div class="w-full h-32 bg-zinc-700 rounded-md mb-2 flex items-center justify-center">
+                                    <span class="text-gray-400 text-sm">Classic Template</span>
+                                </div>
+                                <h3 class="font-medium text-center text-gray-100">Classic</h3>
+                            </div>
+                            <div class="template-card border-2 border-gray-700 rounded-lg p-4 cursor-pointer hover:border-yellow-400 transition-colors duration-300" data-template="modern">
+                                <div class="w-full h-32 bg-zinc-700 rounded-md mb-2 flex items-center justify-center">
+                                    <span class="text-gray-400 text-sm">Modern Template</span>
+                                </div>
+                                <h3 class="font-medium text-center text-gray-100">Modern</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="invoice-form-container" class="hidden bg-zinc-800 rounded-xl shadow-md p-6 mb-6">
+                        <h2 class="text-xl font-semibold text-gray-100 mb-4">Invoice Details</h2>
+                        <form id="invoice-form" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="invoice-number" class="block text-sm font-medium text-gray-300">Invoice Number</label>
+                                    <input type="text" id="invoice-number" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100">
+                                </div>
+                                <div>
+                                    <label for="invoice-date" class="block text-sm font-medium text-gray-300">Invoice Date</label>
+                                    <input type="date" id="invoice-date" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100">
+                                </div>
+                                <div>
+                                    <label for="due-date" class="block text-sm font-medium text-gray-300">Due Date</label>
+                                    <input type="date" id="due-date" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100">
+                                </div>
+                                <div>
+                                    <label for="client-name" class="block text-sm font-medium text-gray-300">Client Name</label>
+                                    <input type="text" id="client-name" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100">
+                                </div>
+                            </div>
+                            
+                            <h3 class="text-lg font-semibold text-gray-100 mt-6 mb-4">Items</h3>
+                            <div id="items-list" class="space-y-4">
+                                <div class="item-row grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                                    <div class="col-span-1 md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-300">Item Name</label>
+                                        <input type="text" class="item-name mt-1 block w-full rounded-md border-gray-600 shadow-sm sm:text-sm p-2 bg-zinc-700 text-gray-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300">Quantity</label>
+                                        <input type="number" class="item-qty mt-1 block w-full rounded-md border-gray-600 shadow-sm sm:text-sm p-2 bg-zinc-700 text-gray-100" min="1" value="1">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300">Price (₹)</label>
+                                        <input type="number" class="item-price mt-1 block w-full rounded-md border-gray-600 shadow-sm sm:text-sm p-2 bg-zinc-700 text-gray-100" min="0" step="0.01">
+                                    </div>
+                                    <button type="button" class="remove-item-btn text-yellow-400 hover:text-yellow-300 transition-colors duration-300">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.013 21H7.987a2 2 0 01-1.92-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" id="add-item-btn" class="mt-4 px-4 py-2 bg-yellow-900 text-yellow-400 font-medium rounded-lg hover:bg-yellow-800 transition-colors duration-300">
+                                + Add another item
+                            </button>
+                        </form>
+
+                        <div id="invoice-preview" class="mt-8 p-6 border border-gray-700 rounded-xl bg-zinc-700">
+                            <h3 class="text-lg font-semibold text-gray-100 mb-4">Invoice Preview</h3>
+                            <div id="pdf-content" class="bg-zinc-800 text-gray-100 p-8 rounded-lg shadow-md">
+                                <div class="flex justify-between items-center mb-6">
+                                    <div>
+                                        <h1 class="text-3xl font-bold text-gray-100">INVOICE</h1>
+                                        <p class="text-sm text-gray-400">Invoice No: <span id="preview-invoice-number"></span></p>
+                                        <p class="text-sm text-gray-400">Date: <span id="preview-invoice-date"></span></p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-lg font-semibold text-gray-100" id="preview-company-name">InGrowwth Innovations</p>
+                                        <p class="text-sm text-gray-400">123 Business Lane, Growth City</p>
+                                        <p class="text-sm text-gray-400">Email: jane.doe@ingrowwth.com</p>
+                                    </div>
+                                </div>
+                                <div class="border-t border-gray-700 pt-6 mt-6">
+                                    <h4 class="font-semibold text-gray-300 mb-2">Bill To:</h4>
+                                    <p class="text-gray-400" id="preview-client-name"></p>
+                                </div>
+                                <div class="mt-6">
+                                    <table class="w-full">
+                                        <thead>
+                                            <tr class="border-b border-t border-gray-700">
+                                                <th class="text-left py-2 text-sm font-medium text-gray-400">Item</th>
+                                                <th class="text-right py-2 text-sm font-medium text-gray-400 hidden sm:table-cell">Qty</th>
+                                                <th class="text-right py-2 text-sm font-medium text-gray-400 hidden sm:table-cell">Price</th>
+                                                <th class="text-right py-2 text-sm font-medium text-gray-400">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="preview-items-list"></tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-8 flex justify-end">
+                                    <div class="w-full max-w-xs">
+                                        <div class="flex justify-between text-sm text-gray-400 mb-1">
+                                            <span>Subtotal</span>
+                                            <span id="preview-subtotal">₹ 0.00</span>
+                                        </div>
+                                        <div class="flex justify-between text-sm text-gray-400 mb-1">
+                                            <span>Tax (0%)</span>
+                                            <span id="preview-tax">₹ 0.00</span>
+                                        </div>
+                                        <div class="flex justify-between font-bold text-gray-100 text-lg mt-2 pt-2 border-t border-gray-700">
+                                            <span>Total</span>
+                                            <span id="preview-total">₹ 0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row justify-end mt-6 space-y-4 sm:space-y-0 sm:space-x-4">
+                            <button id="download-pdf-btn" class="px-6 py-3 bg-yellow-400 text-zinc-900 font-bold rounded-lg hover:bg-yellow-500 transition-colors duration-300 shadow-md flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Download PDF
+                            </button>
+                            <button id="share-btn" class="px-6 py-3 bg-zinc-700 text-gray-100 font-medium rounded-lg hover:bg-zinc-600 transition-colors duration-300 shadow-md flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.883 13.921 9 14.545 9 15a6 6 0 01-6 6c-.33 0-.65-.02-1-.059a4 4 0 013-3 4.004 4.004 0 011-2zM15 12a3 3 0 11-6 0 3 3 0 016 0zM17 12a3 3 0 11-6 0 3 3 0 016 0zM4.342 16.684c-.58 0-1.127-.144-1.625-.402A4 4 0 007 19c.33 0 .65.02 1 .059a4 4 0 003-3 4.004 4.004 0 00-1-2z"></path></svg>
+                                Share
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="confirmation-modal" class="modal">
+        <div class="bg-zinc-800 text-gray-100 rounded-lg p-8 shadow-2xl max-w-sm w-full text-center">
+            <div class="mx-auto mb-4 w-12 h-12 flex items-center justify-center bg-yellow-900 rounded-full">
+                <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-100 mb-2">Reminder Sent!</h3>
+            <p class="text-gray-400 mb-6">A friendly reminder has been successfully sent to the client.</p>
+            <button class="modal-close-btn w-full px-4 py-2 bg-yellow-400 text-zinc-900 rounded-lg hover:bg-yellow-500 transition-colors duration-300 font-bold">
+                Got it
+            </button>
+        </div>
+    </div>
+
+    <div id="portal-modal" class="modal">
+        <div class="bg-zinc-800 text-gray-100 rounded-lg p-8 shadow-2xl max-w-sm w-full text-center">
+            <h3 class="text-xl font-bold text-gray-100 mb-2">Client Portal Created!</h3>
+            <p class="text-gray-400 mb-4">Share this link with your client. They can view and pay all their invoices here.</p>
+            <div class="bg-zinc-700 p-3 rounded-lg flex items-center mb-4">
+                <input id="portal-url" type="text" readonly value="https://ingrowwth.com/portal/clnt_5g3rT" class="flex-grow bg-transparent text-sm text-gray-100 focus:outline-none">
+                <button id="copy-url-btn" class="ml-2 p-2 rounded-md hover:bg-zinc-600 transition-colors duration-300">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2m-4 5v6m-2-3h4M9 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5z"></path></svg>
+                </button>
+            </div>
+            <button class="modal-close-btn w-full px-4 py-2 bg-yellow-400 text-zinc-900 rounded-lg hover:bg-yellow-500 transition-colors duration-300 font-bold">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <div id="user-profile-modal" class="modal">
+        <div class="bg-zinc-800 text-gray-100 rounded-lg p-8 shadow-2xl max-w-lg w-full">
+            <h3 class="text-xl font-bold text-gray-100 mb-4">User Profile & Settings</h3>
+            <form class="space-y-4">
+                <div>
+                    <label for="user-name" class="block text-sm font-medium text-gray-300">Your Name</label>
+                    <input type="text" id="user-name" value="Jane Doe" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100">
+                </div>
+                <div>
+                    <label for="company-name" class="block text-sm font-medium text-gray-300">Company Name</label>
+                    <input type="text" id="company-name" value="InGrowwth Innovations" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100">
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-300">Email Address</label>
+                    <input type="email" id="email" value="jane.doe@ingrowwth.com" readonly class="mt-1 block w-full rounded-md border-gray-600 shadow-sm sm:text-sm p-2 bg-zinc-700 text-gray-100 cursor-not-allowed">
+                </div>
+                <div>
+                    <label for="user-phone" class="block text-sm font-medium text-gray-300">Phone Number</label>
+                    <input type="tel" id="user-phone" value="+91-9876543210" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100">
+                </div>
+                <div>
+                    <label for="user-address" class="block text-sm font-medium text-gray-300">Business Address</label>
+                    <textarea id="user-address" rows="2" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100">123 Business Lane, Growth City, 12345</textarea>
+                </div>
+                <div>
+                    <label for="user-employees" class="block text-sm font-medium text-gray-300">Number of Employees</label>
+                    <input type="number" id="user-employees" min="1" value="5" class="mt-1 block w-full rounded-md border-gray-600 shadow-sm focus:border-yellow-400 focus:ring-yellow-400 sm:text-sm p-2 bg-zinc-700 text-gray-100">
+                </div>
+                <div class="pt-4 flex justify-between items-center">
+                    <button type="submit" class="px-4 py-2 bg-yellow-400 text-zinc-900 font-bold rounded-lg hover:bg-yellow-500 transition-colors duration-300 shadow-md">
+                        Save Changes
+                    </button>
+                    <a href="#" class="text-sm text-gray-400 hover:text-gray-200 transition-colors duration-300">Logout</a>
+                </div>
+            </form>
+            <button class="modal-close-btn absolute top-3 right-3 p-2 rounded-full hover:bg-zinc-700 transition-colors duration-300">
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="copied-toast" class="copied-message">Link Copied!</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const authScreen = document.getElementById('auth-screen');
+            const dashboardScreen = document.getElementById('dashboard-screen');
+            const authTitle = document.getElementById('auth-title');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const toggleAuthLink = document.getElementById('toggle-auth-link');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            
+            const menuButton = document.getElementById('menu-button');
+            const navLinksContainer = document.getElementById('nav-links');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sendReminderBtn = document.getElementById('send-reminder-btn');
+            const clientPortalBtn = document.getElementById('client-portal-btn');
+            const userProfileBtn = document.getElementById('user-profile-btn');
+            const confirmationModal = document.getElementById('confirmation-modal');
+            const portalModal = document.getElementById('portal-modal');
+            const userProfileModal = document.getElementById('user-profile-modal');
+            const closeModalBtns = document.querySelectorAll('.modal-close-btn');
+            const copyUrlBtn = document.getElementById('copy-url-btn');
+            const portalUrlInput = document.getElementById('portal-url');
+            const copiedToast = document.getElementById('copied-toast');
+
+            const newInvoiceBtnNav = document.getElementById('new-invoice-btn-nav');
+            const backToDashboardBtn = document.getElementById('back-to-dashboard-btn');
+            const dashboardView = document.getElementById('dashboard-view');
+            const invoicesView = document.getElementById('invoices-view');
+            const clientsView = document.getElementById('clients-view');
+            const productsView = document.getElementById('products-view');
+            const invoiceScreen = document.getElementById('invoice-screen');
+            const allViews = document.querySelectorAll('.view-screen');
+            const templateCards = document.querySelectorAll('.template-card');
+            const invoiceFormContainer = document.getElementById('invoice-form-container');
+            const invoiceForm = document.getElementById('invoice-form');
+            const itemsList = document.getElementById('items-list');
+            const addItemBtn = document.getElementById('add-item-btn');
+            const downloadPdfBtn = document.getElementById('download-pdf-btn');
+            const shareBtn = document.getElementById('share-btn');
+
+            const previewInvoiceNumber = document.getElementById('preview-invoice-number');
+            const previewInvoiceDate = document.getElementById('preview-invoice-date');
+            const previewCompanyName = document.getElementById('preview-company-name');
+            const previewClientName = document.getElementById('preview-client-name');
+            const previewItemsList = document.getElementById('preview-items-list');
+            const previewSubtotal = document.getElementById('preview-subtotal');
+            const previewTax = document.getElementById('preview-tax');
+            const previewTotal = document.getElementById('preview-total');
+            
+            function handleAuth(event) {
+                event.preventDefault();
+                loadingSpinner.style.display = 'flex';
+                setTimeout(() => {
+                    loadingSpinner.style.display = 'none';
+                    authScreen.classList.add('hidden');
+                    dashboardScreen.classList.remove('hidden');
+                    renderCharts();
+                }, 1500);
+            }
+
+            loginForm.addEventListener('submit', handleAuth);
+            signupForm.addEventListener('submit', handleAuth);
+
+            toggleAuthLink.addEventListener('click', (event) => {
+                event.preventDefault();
+                if (loginForm.classList.contains('hidden')) {
+                    loginForm.classList.remove('hidden');
+                    signupForm.classList.add('hidden');
+                    authTitle.textContent = 'Login to InGrowwth';
+                    toggleAuthLink.textContent = "Don't have an account? Sign up";
+                } else {
+                    loginForm.classList.add('hidden');
+                    signupForm.classList.remove('hidden');
+                    authTitle.textContent = 'Sign Up for InGrowwth';
+                    toggleAuthLink.textContent = "Already have an account? Login";
+                }
+            });
+
+            menuButton.addEventListener('click', () => {
+                navLinksContainer.classList.toggle('hidden');
+                navLinksContainer.classList.toggle('-translate-y-full');
+            });
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = e.target.dataset.target;
+                    allViews.forEach(view => view.classList.add('hidden'));
+                    document.getElementById(targetId).classList.remove('hidden');
+                    if (window.innerWidth < 768) {
+                        navLinksContainer.classList.add('hidden', '-translate-y-full');
+                    }
+                });
+            });
+
+            sendReminderBtn.addEventListener('click', () => {
+                confirmationModal.style.display = 'flex';
+            });
+
+            clientPortalBtn.addEventListener('click', () => {
+                portalModal.style.display = 'flex';
+            });
+
+            userProfileBtn.addEventListener('click', () => {
+                userProfileModal.style.display = 'flex';
+            });
+
+            closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', (event) => {
+                    const modal = event.target.closest('.modal');
+                    modal.style.display = 'none';
+                });
+            });
+
+            window.addEventListener('click', (event) => {
+                if (event.target.classList.contains('modal') && !event.target.closest('.bg-zinc-800')) {
+                    event.target.style.display = 'none';
+                }
+            });
+
+            copyUrlBtn.addEventListener('click', () => {
+                try {
+                    portalUrlInput.select();
+                    document.execCommand('copy');
+                    showToast();
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+            });
+
+            function showToast() {
+                copiedToast.style.opacity = '1';
+                setTimeout(() => {
+                    copiedToast.style.opacity = '0';
+                }, 2000);
+            }
+            
+            function showInvoiceScreen() {
+                allViews.forEach(view => view.classList.add('hidden'));
+                invoiceScreen.classList.remove('hidden');
+            }
+
+            newInvoiceBtnNav.addEventListener('click', showInvoiceScreen);
+            backToDashboardBtn.addEventListener('click', () => {
+                allViews.forEach(view => view.classList.add('hidden'));
+                dashboardView.classList.remove('hidden');
+            });
+
+            templateCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    templateCards.forEach(c => c.classList.remove('border-yellow-400', 'border-4'));
+                    card.classList.add('border-yellow-400', 'border-4');
+                    invoiceFormContainer.classList.remove('hidden');
+                });
+            });
+
+            addItemBtn.addEventListener('click', () => {
+                const newItemRow = document.createElement('div');
+                newItemRow.classList.add('item-row', 'grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4', 'items-end');
+                newItemRow.innerHTML = `
+                    <div class="col-span-1 md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-300">Item Name</label>
+                        <input type="text" class="item-name mt-1 block w-full rounded-md border-gray-600 shadow-sm sm:text-sm p-2 bg-zinc-700 text-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300">Quantity</label>
+                        <input type="number" class="item-qty mt-1 block w-full rounded-md border-gray-600 shadow-sm sm:text-sm p-2 bg-zinc-700 text-gray-100" min="1" value="1">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300">Price (₹)</label>
+                        <input type="number" class="item-price mt-1 block w-full rounded-md border-gray-600 shadow-sm sm:text-sm p-2 bg-zinc-700 text-gray-100" min="0" step="0.01">
+                    </div>
+                    <button type="button" class="remove-item-btn text-yellow-400 hover:text-yellow-300 transition-colors duration-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.013 21H7.987a2 2 0 01-1.92-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                `;
+                itemsList.appendChild(newItemRow);
+            });
+
+            itemsList.addEventListener('click', (event) => {
+                if (event.target.closest('.remove-item-btn')) {
+                    event.target.closest('.item-row').remove();
+                }
+            });
+
+            invoiceForm.addEventListener('input', updatePreview);
+
+            function updatePreview() {
+                previewInvoiceNumber.textContent = document.getElementById('invoice-number').value || 'N/A';
+                previewInvoiceDate.textContent = document.getElementById('invoice-date').value || 'N/A';
+                previewClientName.textContent = document.getElementById('client-name').value || 'N/A';
+
+                let subtotal = 0;
+                previewItemsList.innerHTML = '';
+                document.querySelectorAll('.item-row').forEach(row => {
+                    const itemName = row.querySelector('.item-name').value;
+                    const itemQty = parseFloat(row.querySelector('.item-qty').value) || 0;
+                    const itemPrice = parseFloat(row.querySelector('.item-price').value) || 0;
+                    const total = itemQty * itemPrice;
+                    subtotal += total;
+
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td class="text-left py-2 text-sm text-gray-200">${itemName || 'Item Name'}</td>
+                        <td class="text-right py-2 text-sm text-gray-200 hidden sm:table-cell">${itemQty}</td>
+                        <td class="text-right py-2 text-sm text-gray-200 hidden sm:table-cell">₹ ${itemPrice.toFixed(2)}</td>
+                        <td class="text-right py-2 text-sm text-gray-200">₹ ${total.toFixed(2)}</td>
+                    `;
+                    previewItemsList.appendChild(newRow);
+                });
+
+                previewSubtotal.textContent = `₹ ${subtotal.toFixed(2)}`;
+                previewTax.textContent = `₹ ${(subtotal * 0).toFixed(2)}`;
+                previewTotal.textContent = `₹ ${subtotal.toFixed(2)}`;
+            }
+
+            downloadPdfBtn.addEventListener('click', () => {
+                const element = document.getElementById('pdf-content');
+                const opt = {
+                    margin: 1,
+                    filename: 'invoice.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
+                html2pdf().from(element).set(opt).save();
+            });
+
+            shareBtn.addEventListener('click', () => {
+                const invoiceNumber = document.getElementById('invoice-number').value || 'Untitled';
+                const shareText = `Check out this invoice from InGrowwth Innovations! Invoice No: ${invoiceNumber}.`;
+                const pdfContent = document.getElementById('pdf-content');
+
+                pdfContent.classList.remove('p-8', 'shadow-md');
+                html2pdf().from(pdfContent).output('blob').then(blob => {
+                    const filesArray = [
+                        new File([blob], 'invoice.pdf', {
+                            type: 'application/pdf',
+                            lastModified: new Date().getTime()
+                        })
+                    ];
+                    
+                    if (navigator.canShare && navigator.canShare({ files: filesArray })) {
+                        navigator.share({
+                            files: filesArray,
+                            title: `Invoice ${invoiceNumber}`,
+                            text: shareText,
+                        });
+                    } else {
+                        showToastWithMessage('Sharing not supported. Please download the PDF and share manually.');
+                    }
+                }).finally(() => {
+                     pdfContent.classList.add('p-8', 'shadow-md');
+                });
+            });
+
+            function showToastWithMessage(message) {
+                copiedToast.textContent = message;
+                showToast();
+            }
+
+            function renderCharts() {
+                const salesData = {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Sales (₹)',
+                        data: [120000, 150000, 135000, 175000, 160000, 195000],
+                        borderColor: '#ffd700',
+                        backgroundColor: 'rgba(255, 215, 0, 0.2)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                };
+
+                const statusData = {
+                    labels: ['Paid', 'Pending'],
+                    datasets: [{
+                        data: [850, 400],
+                        backgroundColor: ['#ffd700', '#4a5568'],
+                        borderColor: '#1a1a1a',
+                        borderWidth: 2
+                    }]
+                };
+
+                const salesConfig = {
+                    type: 'line',
+                    data: salesData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#A0AEC0'
+                                },
+                                grid: {
+                                    color: '#2D3748'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#A0AEC0'
+                                },
+                                grid: {
+                                    color: '#2D3748'
+                                }
+                            }
+                        }
+                    }
+                };
+
+                const statusConfig = {
+                    type: 'doughnut',
+                    data: statusData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#A0AEC0'
+                                }
+                            }
+                        }
+                    }
+                };
+                new Chart(document.getElementById('salesChart'), salesConfig);
+                new Chart(document.getElementById('statusChart'), statusConfig);
+            }
+        });
+    </script>
+</body>
+</html>
